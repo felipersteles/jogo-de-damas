@@ -1,3 +1,4 @@
+// vetor com pecas iniciais para facilitar
 var initialPieces = [
   { posY: 0, posX: 1, time: "preto", color: "black" },
   { posY: 0, posX: 3, time: "preto", color: "black" },
@@ -27,33 +28,35 @@ var initialPieces = [
 
 // desenha tabuleiro
 const criar = document.getElementById("criar");
-
 const desenharBoard = () => {
   var tabuleiro = document.getElementById("board");
   var posY = 1;
-  for (var row = 0; row < 8; row++) {
-    var rowEl = document.createElement("tr");
-    var posY = row;
+  for (var linha = 0; linha < 8; linha++) {
+    var linhaEl = document.createElement("tr");
+    var posY = linha;
     var posX = 0;
-    for (var cell = 0; cell < 8; cell++) {
-      var cellEl = document.createElement("td");
-      cellEl.dataset.position = [posX, posY]; // Each square on the board needs a way to be identified. ex. <td data-position="1"></td>
-      cellEl.dataset.ocupado = "nao";
-      rowEl.appendChild(cellEl);
+    for (var casa = 0; casa < 8; casa++) {
+      var casaEl = document.createElement("td");
+      casaEl.dataset.position = [posX, posY]; // Salvando posicao numa string
+      casaEl.dataset.ocupado = "nao";
+      linhaEl.appendChild(casaEl);
       posX++;
     }
-    tabuleiro.appendChild(rowEl);
+
+    tabuleiro.appendChild(linhaEl);
   }
 };
 
+// cria tabuleiro ao carregar janela
 window.onload = desenharBoard;
 
-// desenhar pecas
-function setPieceData(el, color) {
-  el.classname = ""; // This clears out any classes on the current <td>
-  el.classList.add(color); // Add the class of either black or white
+// funcao auxiliar pra definir a cor da peca
+function criarPeca(el, color) {
+  el.classname = "";
+  el.classList.add(color); // adiciona a classe correspondente ao time
 }
 
+// posiciona as pecas
 function posicionasPeca() {
   initialPieces.forEach((peca) => {
     var pecaElemento = document.createElement("div");
@@ -66,13 +69,30 @@ function posicionasPeca() {
       `td[data-position="${peca.posX},${peca.posY}"]`
     );
 
-    //console.log(casaDaPeca);
-
-    setPieceData(pecaElemento, peca.color);
+    criarPeca(pecaElemento, peca.color);
     casaDaPeca.dataset.ocupado = "sim";
     casaDaPeca.appendChild(pecaElemento);
   });
 }
+
+function limparTabuleiro() {
+  const pecas = document.querySelectorAll("#peca");
+
+  pecas.forEach((peca) => {
+    const posX = peca.dataset.posX;
+    const posY = peca.dataset.posY;
+
+    var casaDaPeca = document.querySelector(
+      `td[data-position="${posX},${posY}"]`
+    );
+
+    casaDaPeca.removeChild(peca)
+  });
+}
+
+// variaveis de jogabilidade
+var num_brancas = 12;
+var num_pretas = 12;
 
 var pecaSelecionada = null;
 var casaDireita = null;
@@ -89,15 +109,30 @@ const posicionar = document.getElementById("posicionar");
 posicionar.addEventListener("click", posicionasPeca);
 
 const start = document.getElementById("start");
-start.addEventListener("click", update);
-timeJogando.innerText = vezDoBranco ? "branco" : "preto";
+start.addEventListener("click", gameLoop(15));
 
 function update() {
-  console.log("jogo iniciado");
-
   onclick = (evento) => {
     if (evento.target.id === "peca") handleClick(evento);
   };
+
+  timeJogando.innerText = vezDoBranco ? "branco" : "preto";
+
+  if (num_brancas === 0) {
+    acabaJogo("preto");
+  }
+  if (num_pretas === 0) {
+    acabaJogo("branco");
+  }
+}
+
+const acabar = document.getElementById("acabar");
+acabar.addEventListener("click", acabaJogo);
+
+function acabaJogo(vencedor) {
+  limparTabuleiro()
+  console.log(vencedor + "venceu");
+  return;
 }
 
 function handleClick(evento) {
@@ -179,9 +214,6 @@ function verificarProtecao(pecaAmeacada) {
     `td[data-position="${posX},${posY}"]`
   );
 
-  console.log(pecaAmeacada);
-  console.log(" esta protegida?");
-
   var novaCasa = null;
   if (casaDaPeca === casaDireita) {
     // verificar se a casa a direita esta ocupada
@@ -197,9 +229,8 @@ function verificarProtecao(pecaAmeacada) {
     }
 
     casaDireita = novaCasa;
-    console.log(verificaCasa(novaCasa, pecaAmeacada))
     if (!verificaCasa(novaCasa, pecaAmeacada)) {
-      posPecaComida = casaDaPeca
+      posPecaComida = casaDaPeca;
       pecaComida = pecaAmeacada;
       temQueComer = true;
     }
@@ -218,7 +249,7 @@ function verificarProtecao(pecaAmeacada) {
 
     casaEsquerda = novaCasa;
     if (!verificaCasa(novaCasa, pecaAmeacada)) {
-      posPecaComida = casaDaPeca
+      posPecaComida = casaDaPeca;
       pecaComida = pecaAmeacada;
       temQueComer = true;
     }
@@ -235,6 +266,9 @@ function moverPeca(evento) {
   );
 
   if (temQueComer === true) {
+    if (pecaComida.dataset.time === "branco") num_brancas--;
+    if (pecaComida.dataset.time === "preto") num_pretas--;
+
     removerPeca(posPecaComida, pecaComida);
     pecaComida = null;
     temQueComer = false;
@@ -273,6 +307,17 @@ function limparSelecao() {
   pecaSelecionada = null;
   casaDireita = null;
   casaEsquerda = null;
+}
+
+function gameLoop(fps) {
+  num_brancas = 12;
+  num_pretas = 12;
+
+  setInterval(show, 1000 / fps); // 15 é o fps
+}
+
+function show() {
+  update();
 }
 
 //-----------------------------------------------------------------------------------------------------
@@ -333,10 +378,10 @@ function limparSelecao() {
 // DEBUG
 // -------------------------------------------------------------------------------------
 
-// //debugar_algo = pecas;
+// debugar_algo = num_brancas;
 // const DEBUG = document.getElementById("debug");
 // const debugar = () => {
 //   console.log(debugar_algo);
 // };
 
-// DEBUG.addEventListener("click", update);
+// DEBUG.addEventListener("click", acabaJogo);
