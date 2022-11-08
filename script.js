@@ -248,10 +248,6 @@ function moverPeca(evento) {
   var novaCasa = evento.target;
   if (novaCasa != casaDireita && novaCasa != casaEsquerda) return;
 
-  console.log(possibilidades);
-  console.log(casaDireita);
-  console.log(casaEsquerda);
-
   removerPeca(pecaSelecionada);
   addPeca(novaCasa, pecaSelecionada);
 
@@ -270,10 +266,7 @@ function moverPeca(evento) {
   vezDoBranco = !vezDoBranco;
   temQueComer = false;
 
-  console.log("depois da limpeza");
   limparSelecao();
-  console.log(casaDireita);
-  console.log(casaEsquerda);
 }
 
 function comerPeca(peca) {
@@ -281,10 +274,6 @@ function comerPeca(peca) {
 
   const dir = direcao(peca);
   const novaCasa = casaDaFrente(peca, dir);
-
-  console.log(pecaAmeacadaDir);
-  console.log(pecaAmeacadaEsq);
-  console.log(novaCasa);
 
   if (dir === "direita") {
     casaDireita = novaCasa;
