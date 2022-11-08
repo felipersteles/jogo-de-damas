@@ -101,8 +101,8 @@ var casaEsquerda = null;
 var vezDoBranco = true;
 
 var temQueComer = false;
-var pecaComida = null;
-var posicaoPecaComida = null;
+var pecaAmeacadaEsq, pecaAmeacadaDir;
+var possibilidades = 0;
 
 // mostrar de quem é a vez
 var timeJogando = document.getElementById("jogando");
@@ -219,6 +219,7 @@ function verificaCasa(casa, peca) {
   if (casa !== null) {
     // caso a casa esteja vazia, permite o movimento
     if (casa.dataset.ocupado === "nao") {
+      possibilidades++;
       pintar(casa, "verde");
       casa.addEventListener("click", moverPeca, { once: true });
     } else {
@@ -241,41 +242,15 @@ function verificarProtecao(pecaAmeacada, dir) {
   if (protecao.dataset.ocupado === "nao") return "desprotegida";
   else return "protegida";
 }
-function verificarProtecaoCasa(casa, direcao) {
-  // direcao que a peça esta
-  const posX = casa.dataset.position.split(",")[0];
-  const posY = casa.dataset.position.split(",")[1];
-
-  let x = -1;
-  let y = -1;
-
-  // casas adjacentes:
-  // x = posx - 1, y = posy - 1
-  // x = posx + 1, y = posy - 1
-  // x = posx - 1, y = posy + 1
-  // x = posx - 1, y = posy + 1
-
-  if (direcao === "nw") {
-    x = posX - 1
-    y = posY - 1
-  }else if(direcao === "ne"){
-    x = posX + 1
-    y = posY - 1
-  }else if(direcao === "sw"){
-    x = posX - 1
-    y = posY + 1
-  }else if(direcao === "se"){
-    x = posX + 1
-    y = posY + 1
-  }
-
-  console.log(getPeca(x,y))
-}
 
 function moverPeca(evento) {
   // faz a mudanca de casas
   var novaCasa = evento.target;
   if (novaCasa != casaDireita && novaCasa != casaEsquerda) return;
+
+  console.log(possibilidades);
+  console.log(casaDireita);
+  console.log(casaEsquerda);
 
   removerPeca(pecaSelecionada);
   addPeca(novaCasa, pecaSelecionada);
@@ -284,12 +259,21 @@ function moverPeca(evento) {
   pecaSelecionada.dataset.posX = novaCasa.dataset.position.split(",")[0];
   pecaSelecionada.dataset.posY = novaCasa.dataset.position.split(",")[1];
 
-  if (temQueComer === true) removerPeca(pecaComida);
+  if (temQueComer === true) {
+    if (novaCasa === casaEsquerda) removerPeca(pecaAmeacadaEsq);
+    else removerPeca(pecaAmeacadaDir);
+
+    // verificaCasa(novaCasa, pecaSelecionada);
+    // console.log("estamos aqui");
+  }
 
   vezDoBranco = !vezDoBranco;
   temQueComer = false;
 
+  console.log("depois da limpeza");
   limparSelecao();
+  console.log(casaDireita);
+  console.log(casaEsquerda);
 }
 
 function comerPeca(peca) {
@@ -297,23 +281,35 @@ function comerPeca(peca) {
 
   const dir = direcao(peca);
   const novaCasa = casaDaFrente(peca, dir);
-  verificarProtecaoCasa(novaCasa, 'ne');
+
+  console.log(pecaAmeacadaDir);
+  console.log(pecaAmeacadaEsq);
+  console.log(novaCasa);
 
   if (dir === "direita") {
     casaDireita = novaCasa;
-    if (casaEsquerda !== null && casaEsquerda.dataset.ocupado === "nao")
+    pecaAmeacadaDir = peca;
+    if (casaEsquerda !== null && casaEsquerda.dataset.ocupado === "nao") {
+      limpar(casaEsquerda, "verde");
       casaEsquerda = null;
+    }
   }
   if (dir === "esquerda") {
     casaEsquerda = novaCasa;
-    if (casaDireita !== null && casaDireita.dataset.ocupado === "nao")
+    pecaAmeacadaEsq = peca;
+    if (
+      casaDireita !== null &&
+      casaDireita.dataset.ocupado === "nao" &&
+      pecaAmeacadaDir === null
+    ) {
+      limpar(casaDireita, "verde");
       casaDireita = null;
+    }
   }
 
   pintar(novaCasa, "verde");
-  // novaCasa.addEventListener("click", moverPeca, {once: true} );
-
-  pecaComida = peca;
+  possibilidades++;
+  novaCasa.addEventListener("click", moverPeca, { once: true });
 }
 
 function removerPeca(peca) {
@@ -328,7 +324,7 @@ function addPeca(casa, peca) {
 }
 
 function pintar(casa, cor) {
-  casa.classList.add(cor);
+  if (casa !== null) casa.classList.add(cor);
 }
 function limpar(casa, cor) {
   casa.classList.remove(cor);
@@ -343,8 +339,11 @@ function limparSelecao() {
   casaDireita = null;
   casaEsquerda = null;
 
-  pecaComida = null;
-  temQueComer = null;
+  pecaAmeacadaDir = null;
+  pecaAmeacadaEsq = null;
+  temQueComer = false;
+
+  possibilidades = 0;
 }
 
 function getPeca(x, y) {
