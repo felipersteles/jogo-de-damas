@@ -256,11 +256,11 @@ function moverPeca(evento) {
   pecaSelecionada.dataset.posY = novaCasa.dataset.position.split(",")[1];
 
   if (temQueComer === true) {
-    if (novaCasa === casaEsquerda) removerPeca(pecaAmeacadaEsq);
-    else removerPeca(pecaAmeacadaDir);
-
-    // verificaCasa(novaCasa, pecaSelecionada);
-    // console.log("estamos aqui");
+    if (novaCasa === casaEsquerda) {
+      removerPeca(pecaAmeacadaEsq);
+    } else {
+      removerPeca(pecaAmeacadaDir);
+    }
   }
 
   vezDoBranco = !vezDoBranco;
@@ -296,9 +296,31 @@ function comerPeca(peca) {
     }
   }
 
+  console.log(pecaAmeacadaDir)
+  console.log(pecaAmeacadaEsq)
+
+  // verifica se a nova casa é a ultima possivel
+  verificacaoCompleta(novaCasa);
+
   pintar(novaCasa, "verde");
   possibilidades++;
   novaCasa.addEventListener("click", moverPeca, { once: true });
+}
+
+function verificacaoCompleta(casa) {
+  // 4 direcoes
+  // x + 1; y + 1 direita cima
+  // x + 1; y - 1 direita baixo
+  // x - 1; y + 1 esquerda cima
+  // x - 1; y - 1 esquerda baixo
+
+  const posX = parseInt(casa.dataset.position.split(",")[0]);
+  const posY = parseInt(casa.dataset.position.split(",")[1]);
+
+  console.log(getCasa(posX + 1, posY + 1));
+  console.log(getCasa(posX + 1, posY - 1));
+  console.log(getCasa(posX - 1, posY + 1));
+  console.log(getCasa(posX - 1, posY - 1));
 }
 
 function removerPeca(peca) {
@@ -311,7 +333,6 @@ function addPeca(casa, peca) {
   casa.appendChild(peca);
   casa.dataset.ocupado = "sim";
 }
-
 function pintar(casa, cor) {
   if (casa !== null) casa.classList.add(cor);
 }
@@ -334,11 +355,8 @@ function limparSelecao() {
 
   possibilidades = 0;
 }
-
-function getPeca(x, y) {
-  const casaDaPeca = document.querySelector(`td[data-position="${x},${y}"]`);
-
-  if (casaDaPeca.dataset.ocupado === "sim") return casaDaPeca.firstChild;
+function getCasa(x, y) {
+  return document.querySelector(`td[data-position="${x},${y}"]`);
 }
 function getCasaDaPeca(peca) {
   const posX = parseInt(peca.dataset.posX);
@@ -390,7 +408,6 @@ function gameLoop(fps) {
 
   setInterval(show, 1000 / fps); // 15 é o fps
 }
-
 function show() {
   update();
 }
