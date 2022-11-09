@@ -27,7 +27,6 @@ var initialPieces = [
 ];
 
 // desenha tabuleiro
-const criar = document.getElementById("criar");
 const desenharBoard = () => {
   var tabuleiro = document.getElementById("board");
   var posY = 1;
@@ -64,6 +63,7 @@ function posicionasPeca() {
     pecaElemento.dataset.posX = peca.posX;
     pecaElemento.dataset.posY = peca.posY;
     pecaElemento.dataset.time = peca.time;
+    pecaElemento.dataset.dama = "nao";
 
     var casaDaPeca = document.querySelector(
       `td[data-position="${peca.posX},${peca.posY}"]`
@@ -96,16 +96,21 @@ var num_pretas = 0;
 
 var pecaSelecionada = null;
 var casaDaPecaSelecionada = null;
-var casaDireita = null;
-var casaEsquerda = null;
 var vezDoBranco = true;
 
 var temQueComer = false;
 var pecaAmeacadaEsq, pecaAmeacadaDir;
 var possibilidades = 0;
+var casasPossiveis = [];
+var pecasAmeacadas = [];
 
 // mostrar de quem é a vez
 var timeJogando = document.getElementById("jogando");
+
+// possiveis movimentos
+var movimentos = document.getElementById("movimentos");
+var pretas = document.getElementById("pretas");
+var brancas = document.getElementById("brancas");
 
 const posicionar = document.getElementById("posicionar");
 posicionar.addEventListener("click", posicionasPeca);
@@ -121,257 +126,234 @@ function start() {
   gameLoop(15);
 }
 
+function gameLoop(fps) {
+  num_brancas = 12;
+  num_pretas = 12;
+
+  setInterval(update, 1000 / fps); // 15 é o fps
+}
+
 // permite jogar
 function update() {
-  onclick = (evento) => {
-    if (evento.target.id === "peca") handleClick(evento);
-  };
-
   timeJogando.innerText = vezDoBranco ? "branco" : "preto";
+  movimentos.innerText = `Possiveis movimentos: ${possibilidades}`;
+  pretas.innerText = `Num de pretas: ${num_pretas}`;
+  brancas.innerText = `Num de brancas: ${num_brancas}`;
 
-  if (num_brancas === 0) {
-    acabaJogo("preto");
+  // quando o mouse clicar em algo
+  onclick = (evento) => {
+    if (evento.target.id === "peca") {
+      if (vezDoBranco === true && evento.target.dataset.time === "branco")
+        pecaSelecionada = evento.target;
+
+      if (vezDoBranco === false && evento.target.dataset.time === "preto")
+        pecaSelecionada = evento.target;
+
+      if (pecaSelecionada !== null) {
+        verificaPossiveisMovimentos(pecaSelecionada);
+      } else alert("Peça inválida");
+    }
+  };
+}
+
+function verificaPossiveisMovimentos(peca) {
+  const posX = parseInt(peca.dataset.posX);
+  const posY = parseInt(peca.dataset.posY);
+  const time = peca.dataset.time;
+  const ehDama = peca.dataset.dama;
+
+  limparSelecao();
+  pecaSelecionada = peca;
+  casaDaPecaSelecionada = getCasa(posX, posY);
+
+  if (time === "branco") {
+    if (ehDama === "nao") {
+      movimentoSimples(peca, time);
+    }
+  } else {
+    if (ehDama === "nao") {
+      movimentoSimples(peca, time);
+    }
   }
-  if (num_pretas === 0) {
-    acabaJogo("branco");
+}
+
+// 2 direcoes
+function movimentoSimples(peca, timeJogando) {
+  const posX = parseInt(peca.dataset.posX);
+  const posY = parseInt(peca.dataset.posY);
+
+  let casaDireita, casaEsquerda;
+
+  if (timeJogando === "branco") {
+    // x + 1; y + 1 direita cima
+    // x - 1; y + 1 esquerda cima
+    novoY = posY - 1;
+  } else {
+    // x + 1; y - 1 direita baixo
+    // x - 1; y - 1 esquerda baixo
+    novoY = posY + 1;
   }
+
+  casaDireita = getCasaDireita(peca, timeJogando);
+  casaEsquerda = getCasaEsquerda(peca, timeJogando);
+
+  analisaCasa(casaDireita, timeJogando, "direita");
+  analisaCasa(casaEsquerda, timeJogando, "esquerda");
+
+  if (pecasAmeacadas.length > 0) {
+    possibilidades = pecasAmeacadas.length;
+
+    // unicas casas possiveis sao as que envolvem comer a peça
+    casasPossiveis = [];
+    pecasAmeacadas.forEach((pecaAmeacada) => {
+      //verifica se é a ultima casa possivel
+      casasPossiveis.push(pecaAmeacada[1]);
+    });
+  } else possibilidades = casasPossiveis.length;
+
+  if (possibilidades > 0) pintar(casaDaPecaSelecionada, "amarelo");
+
+  casasPossiveis.forEach((casa) => {
+    pintar(casa, "verde");
+    casa.addEventListener("click", mover, { once: true });
+  });
 }
+function mover(evento) {
+  const novaCasa = evento.target;
 
-const acabar = document.getElementById("acabar");
-acabar.addEventListener("click", acabaJogo);
+  addPeca(novaCasa, pecaSelecionada);
 
-// incompleta
-function acabaJogo(vencedor) {
-  limparTabuleiro();
-  console.log(vencedor + "venceu");
-  return;
-}
+  // atualiza peca e limpar a casa
+  pecaSelecionada.dataset.posX = novaCasa.dataset.position.split(",")[0];
+  pecaSelecionada.dataset.posY = novaCasa.dataset.position.split(",")[1];
+  casaDaPecaSelecionada.dataset.ocupado = "nao";
 
-// selecionar uma peça
-function handleClick(evento) {
-  if (!temQueComer) {
-    if (pecaSelecionada !== null) limparSelecao();
-
-    if (vezDoBranco === true && evento.target.dataset.time === "branco")
-      pecaSelecionada = evento.target;
-
-    if (vezDoBranco === false && evento.target.dataset.time === "preto")
-      pecaSelecionada = evento.target;
-
-    if (pecaSelecionada !== null) possiveisMovimentos(pecaSelecionada);
-    else console.log("Selecione uma peça válida");
+  if (pecasAmeacadas.length > 0) {
+    pecasAmeacadas.forEach((pecaAmeacada) => {
+      if (pecaAmeacada[1] === novaCasa) comerPeca(pecaAmeacada[0]);
+    });
   }
+
+  vezDoBranco = !vezDoBranco;
+
+  if (
+    pecaSelecionada.dataset.time === "branco" &&
+    pecaSelecionada.dataset.posY == 0
+  )
+    coroarPeca(pecaSelecionada);
+
+  if (
+    pecaSelecionada.dataset.time === "preto" &&
+    pecaSelecionada.dataset.posY == 7
+  )
+    coroarPeca(pecaSelecionada);
+
+  limparSelecao();
 }
-
-function possiveisMovimentos(peca) {
-  verificaMovimento(peca); // preenche a casa direita e a casa esquerda
-
-  // verifica se sao movimentos possiveis
-  verificaCasa(casaDireita, peca);
-  verificaCasa(casaEsquerda, peca);
-}
-
-function verificaMovimento(peca) {
+function comerPeca(peca) {
   const posX = parseInt(peca.dataset.posX);
   const posY = parseInt(peca.dataset.posY);
   const time = peca.dataset.time;
 
-  // preenche a casa da peca selecionada e pinta de amarelo
-  casaDaPecaSelecionada = document.querySelector(
-    `td[data-position="${posX},${posY}"]`
-  );
-  pintar(casaDaPecaSelecionada, "amarelo");
+  const casaDaPeca = getCasa(posX, posY);
 
-  // vertical
-  // se o time for preto a nova pos Y é posY + 1
-  // se o time for branco a nova pos Y é posY - 1
-  let yBranco = posY - 1;
-  let yPreto = posY + 1;
+  casaDaPeca.removeChild(peca);
+  casaDaPeca.dataset.ocupado = "nao";
 
-  // horizontal
-  let direita = posX + 1;
-  let esquerda = posX - 1;
-
-  // verifica qual o time da peca selecionada
-  if (time === "branco") {
-    if (posX + 1 < 8 && posY - 1 >= 0)
-      casaDireita = document.querySelector(
-        `td[data-position="${direita},${yBranco}"]`
-      );
-
-    if (posX - 1 >= 0 && posY - 1 >= 0)
-      casaEsquerda = document.querySelector(
-        `td[data-position="${esquerda},${yBranco}"]`
-      );
-  } else {
-    if (posX + 1 < 8 && posY + 1 >= 0)
-      casaDireita = document.querySelector(
-        `td[data-position="${direita},${yPreto}"]`
-      );
-    if (posX - 1 >= 0 && posY + 1 >= 0)
-      casaEsquerda = document.querySelector(
-        `td[data-position="${esquerda},${yPreto}"]`
-      );
-  }
+  if (time === "preto") num_pretas--;
+  else num_brancas--;
 }
 
-function verificaCasa(casa, peca) {
+function analisaCasa(casa, timeJogando, dir) {
   if (casa !== null) {
-    // caso a casa esteja vazia, permite o movimento
     if (casa.dataset.ocupado === "nao") {
-      possibilidades++;
-      pintar(casa, "verde");
-      casa.addEventListener("click", moverPeca, { once: true });
+      casasPossiveis.push(casa);
     } else {
       const pecaDaCasa = casa.firstChild;
-
-      // caso a casa esteja ocupada por uma peça do time inimigo, verifica se a peça do inimigo esta protegida
-      if (pecaDaCasa.dataset.time !== peca.dataset.time) {
-        const dir = direcao(pecaDaCasa);
+      if (pecaDaCasa.dataset.time !== timeJogando) {
         if (verificarProtecao(pecaDaCasa, dir) === "desprotegida") {
-          comerPeca(pecaDaCasa);
+          let novaCasa = getCasaDaFrente(pecaDaCasa, dir);
+          analisaCasasAdjacentes(novaCasa, pecaDaCasa);
         }
       }
     }
   }
 }
-
 function verificarProtecao(pecaAmeacada, dir) {
-  const protecao = casaDaFrente(pecaAmeacada, dir);
+  const casaDaPeca = getCasaDaFrente(pecaAmeacada, dir);
+  if (casaDaPeca !== null && casaDaPeca.dataset.ocupado === "nao")
+    return "desprotegida";
 
-  if (protecao.dataset.ocupado === "nao") return "desprotegida";
-  else return "protegida";
+  return "protegida";
 }
-
-function moverPeca(evento) {
-  // faz a mudanca de casas
-  var novaCasa = evento.target;
-  if (novaCasa != casaDireita && novaCasa != casaEsquerda) return;
-
-  removerPeca(pecaSelecionada);
-  addPeca(novaCasa, pecaSelecionada);
-
-  // atualiza peca
-  pecaSelecionada.dataset.posX = novaCasa.dataset.position.split(",")[0];
-  pecaSelecionada.dataset.posY = novaCasa.dataset.position.split(",")[1];
-
-  if (temQueComer === true) {
-    if (novaCasa === casaEsquerda) {
-      removerPeca(pecaAmeacadaEsq);
-    } else {
-      removerPeca(pecaAmeacadaDir);
-    }
-  }
-
-  vezDoBranco = !vezDoBranco;
-  temQueComer = false;
-
-  limparSelecao();
-}
-
-function comerPeca(peca) {
-  temQueComer = true;
-
-  const dir = direcao(peca);
-  const novaCasa = casaDaFrente(peca, dir);
-
-  if (dir === "direita") {
-    casaDireita = novaCasa;
-    pecaAmeacadaDir = peca;
-    if (casaEsquerda !== null && casaEsquerda.dataset.ocupado === "nao") {
-      limpar(casaEsquerda, "verde");
-      casaEsquerda = null;
-    }
-  }
-  if (dir === "esquerda") {
-    casaEsquerda = novaCasa;
-    pecaAmeacadaEsq = peca;
-    if (
-      casaDireita !== null &&
-      casaDireita.dataset.ocupado === "nao" &&
-      pecaAmeacadaDir === null
-    ) {
-      limpar(casaDireita, "verde");
-      casaDireita = null;
-    }
-  }
-
-  console.log(pecaAmeacadaDir)
-  console.log(pecaAmeacadaEsq)
-
-  // verifica se a nova casa é a ultima possivel
-  verificacaoCompleta(novaCasa);
-
-  pintar(novaCasa, "verde");
-  possibilidades++;
-  novaCasa.addEventListener("click", moverPeca, { once: true });
-}
-
-function verificacaoCompleta(casa) {
-  // 4 direcoes
-  // x + 1; y + 1 direita cima
-  // x + 1; y - 1 direita baixo
+function analisaCasasAdjacentes(casa, peca) {
+  // x + 1; y - 1 direita cima
   // x - 1; y + 1 esquerda cima
+  // x + 1; y + 1 direita baixo
   // x - 1; y - 1 esquerda baixo
 
-  const posX = parseInt(casa.dataset.position.split(",")[0]);
-  const posY = parseInt(casa.dataset.position.split(",")[1]);
+  const x = parseInt(casa.dataset.position.split(",")[0]);
+  const y = parseInt(casa.dataset.position.split(",")[1]);
 
-  console.log(getCasa(posX + 1, posY + 1));
-  console.log(getCasa(posX + 1, posY - 1));
-  console.log(getCasa(posX - 1, posY + 1));
-  console.log(getCasa(posX - 1, posY - 1));
+  const casaDireitaCima = getCasa(x + 1, y - 1);
+  const casaEsquerdaCima = getCasa(x - 1, y + 1);
+  const casaDireitaBaixo = getCasa(x + 1, y + 1);
+  const casaEsquerdaBaixo = getCasa(x - 1, y - 1);
+
+  if (casaDireitaCima !== null && casaDireitaCima.dataset.ocupado === "sim") {
+    const pecaAux = casaDireitaCima.firstChild;
+    if (verificarProtecao(pecaAux, "direita") === "desprotegida") {
+      pecasAmeacadas.push([[pecaAux, peca], getCasaDaFrente(pecaAux, "direita")]);
+    }
+  }
 }
 
-function removerPeca(peca) {
-  const casa = getCasaDaPeca(peca);
-
-  casa.removeChild(peca);
-  casa.dataset.ocupado = "nao";
+function coroarPeca(peca) {
+  peca.classList.add("dama");
+  peca.dataset.dama = "sim";
 }
-function addPeca(casa, peca) {
-  casa.appendChild(peca);
-  casa.dataset.ocupado = "sim";
-}
-function pintar(casa, cor) {
-  if (casa !== null) casa.classList.add(cor);
-}
-function limpar(casa, cor) {
-  casa.classList.remove(cor);
-}
-function limparSelecao() {
-  limpar(casaDaPecaSelecionada, "amarelo");
 
-  if (casaDireita !== null) limpar(casaDireita, "verde");
-  if (casaEsquerda !== null) limpar(casaEsquerda, "verde");
-
-  if (temQueComer === false) pecaSelecionada = null;
-  casaDireita = null;
-  casaEsquerda = null;
-
-  pecaAmeacadaDir = null;
-  pecaAmeacadaEsq = null;
-  temQueComer = false;
-
-  possibilidades = 0;
-}
 function getCasa(x, y) {
   return document.querySelector(`td[data-position="${x},${y}"]`);
 }
-function getCasaDaPeca(peca) {
+function getCasaDireita(peca, time) {
   const posX = parseInt(peca.dataset.posX);
   const posY = parseInt(peca.dataset.posY);
 
-  return (casaDaPeca = document.querySelector(
-    `td[data-position="${posX},${posY}"]`
-  ));
-}
-function getPecaDaCasa(casa) {
-  if (casa.dataset.ocupado === "sim") return casa.firstChild;
+  let novoX = posX + 1,
+    novoY;
 
-  return null;
+  if (time === "branco") {
+    // x + 1; y + 1 direita cima
+    // x - 1; y + 1 esquerda cima
+    novoY = posY - 1;
+  } else {
+    // x + 1; y - 1 direita baixo
+    // x - 1; y - 1 esquerda baixo
+    novoY = posY + 1;
+  }
+
+  return getCasa(novoX, novoY);
 }
-function casaDaFrente(peca, dir) {
+function getCasaEsquerda(peca, time) {
+  const posX = parseInt(peca.dataset.posX);
+  const posY = parseInt(peca.dataset.posY);
+  let novoX = posX - 1,
+    novoY;
+
+  if (time === "branco") {
+    // x + 1; y + 1 direita cima
+    // x - 1; y + 1 esquerda cima
+    novoY = posY - 1;
+  } else {
+    // x + 1; y - 1 direita baixo
+    // x - 1; y - 1 esquerda baixo
+    novoY = posY + 1;
+  }
+
+  return getCasa(novoX, novoY);
+}
+function getCasaDaFrente(peca, dir) {
   const posX = parseInt(peca.dataset.posX);
   const posY = parseInt(peca.dataset.posY);
   const time = peca.dataset.time;
@@ -389,91 +371,24 @@ function casaDaFrente(peca, dir) {
 
   return document.querySelector(`td[data-position="${novoX},${novoY}"]`);
 }
-function direcao(peca) {
-  const posX = parseInt(peca.dataset.posX);
-  const posY = parseInt(peca.dataset.posY);
-
-  const casaDaPeca = document.querySelector(
-    `td[data-position="${posX},${posY}"]`
-  );
-
-  // verifica se a peca ameacada esta na esquerda ou na direita
-  if (casaDaPeca === casaDireita) return "direita";
-  if (casaDaPeca === casaEsquerda) return "esquerda";
+function addPeca(casa, peca) {
+  casa.appendChild(peca);
+  casa.dataset.ocupado = "sim";
 }
-
-function gameLoop(fps) {
-  num_brancas = 12;
-  num_pretas = 12;
-
-  setInterval(show, 1000 / fps); // 15 é o fps
+function pintar(casa, cor) {
+  if (casa !== null) casa.classList.add(cor);
 }
-function show() {
-  update();
+function limpar(casa, cor) {
+  casa.classList.remove(cor);
 }
+function limparSelecao() {
+  pecaSelecionada = null;
+  possibilidades = 0;
 
-//-----------------------------------------------------------------------------------------------------
-// Tentativa utilizando canvas (tentar depois)
-//-----------------------------------------------------------------------------------------------------
+  if (casaDaPecaSelecionada !== null) limpar(casaDaPecaSelecionada, "amarelo");
 
-// sensores são a forma como os computadores veem o mundo
-// nova iorque sistema de crime batman e coringa
-// class Casa {
-//   constructor(x, y) {
-//     this.x = x;
-//     this.y = y;
-//     this.peca = null;
-//   }
-
-//   addPeca(peca) {
-//     this.peca = peca;
-//   }
-// }
-
-// class Peca {
-//   constructor(time, posX, posY) {
-//     this.posX = posX;
-//     this.posY = posY;
-//     this.time = time;
-//   }
-// }
-
-// function criarBoard(board) {
-//   for (var i = 0; i < 8; i++) {
-//     for (var j = 0; j < 8; j++) {
-//       if (board[i][j] === 1) {
-//         board[i][j] = new Casa(i, j);
-//       }
-//     }
-//   }
-
-//   preencherBoard(board);
-// }
-
-// function preencherBoard(board) {
-//   for (var i = 0; i < 8; i++) {
-//     for (var j = 0; j < 8; j++) {
-//       if (board[i][j] !== 0) {
-//         if (i < 3) {
-//           board[i][j].addPeca(new Peca("preta", i, j));
-//         } else if (i > 4) {
-//           board[i][j].addPeca(new Peca("branca", i, j));
-//         }
-//       }
-//     }
-//   }
-// }
-
-// criarBoard(board);
-
-// -------------------------------------------------------------------------------------
-// DEBUG
-// -------------------------------------------------------------------------------------
-
-// debugar_algo = num_brancas;
-// const DEBUG = document.getElementById("debug");
-// const debugar = () => {
-//   console.log(debugar_algo);
-// };
-
-// DEBUG.addEventListener("click", acabaJogo);
+  // limpa as casas possiveis
+  casasPossiveis.forEach((casa) => limpar(casa, "verde"));
+  casasPossiveis = [];
+  pecasAmeacadas = [];
+}
