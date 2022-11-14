@@ -118,6 +118,9 @@ posicionar.addEventListener("click", posicionasPeca);
 const startButton = document.getElementById("start");
 startButton.addEventListener("click", start);
 
+const acabarButton = document.getElementById("acabar");
+acabarButton.addEventListener("click", limparTabuleiro);
+
 // jogo começa
 function start() {
   num_brancas = 12;
@@ -273,7 +276,7 @@ function analisaCasa(casa, timeJogando, dir) {
       if (pecaDaCasa.dataset.time !== timeJogando) {
         if (verificarProtecao(pecaDaCasa, dir) === "desprotegida") {
           let novaCasa = getCasaDaFrente(pecaDaCasa, dir);
-          analisaCasasAdjacentes(novaCasa, pecaDaCasa);
+          pecasAmeacadas.push([pecaDaCasa, novaCasa])
         }
       }
     }
