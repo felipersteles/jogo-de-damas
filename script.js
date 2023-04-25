@@ -26,6 +26,15 @@ var initialPieces = [
   { posY: 7, posX: 6, time: "branco", color: "white" },
 ];
 
+var testingPieces = [
+  { posY: 7, posX: 2, time: "branco", color: "white" },
+  { posY: 6, posX: 1, time: "preto", color: "black" },
+  { posY: 6, posX: 3, time: "preto", color: "black" },
+  { posY: 4, posX: 5, time: "preto", color: "black" },
+  { posY: 2, posX: 7, time: "preto", color: "black" },
+  { posY: 2, posX: 5, time: "preto", color: "black" },
+];
+
 // desenha tabuleiro
 const desenharBoard = () => {
   var tabuleiro = document.getElementById("board");
@@ -61,7 +70,7 @@ var pecasPosiciodas = false;
 function posicionasPeca() {
   if (pecasPosiciodas) return;
 
-  initialPieces.forEach((peca) => {
+  testingPieces.forEach((peca) => {
     var pecaElemento = document.createElement("div");
     pecaElemento.setAttribute("id", "peca");
     pecaElemento.dataset.time = peca.time;
@@ -164,7 +173,10 @@ function update() {
 }
 
 function verificaPossiveisMovimentos() {
-  movimentoSimples();
+  const casaDaPecaSelecionada = pecaSelecionada.parentNode;
+
+  analisarDireita(casaDaPecaSelecionada);
+  // analisarEsquerda(casaDaPecaSelecionada);
   pintarCasasPossiveis();
 }
 
@@ -188,29 +200,6 @@ function performarUmaJogada(destino) {
   } else alert("Escolha uma posição possivel.");
 }
 
-// 2 direcoes
-function movimentoSimples() {
-  const peca = pecaSelecionada;
-
-  const casaDireita = getCasaDireita(peca, peca.dataset.time);
-  const casaEsquerda = getCasaEsquerda(peca, peca.dataset.time);
-
-  if (casaDireita) {
-    pecaInimiga = analisaCasa(casaDireita);
-    if (pecaInimiga) {
-      // analisar se é a unica
-      // peça ameaçada
-      console.log("comer", pecaInimiga);
-    }
-  }
-  if (casaEsquerda) {
-    pecaInimiga = analisaCasa(casaEsquerda);
-    if (pecaInimiga) {
-      analisaCasa(getCasaEsquerda(pecaInimiga, peca.dataset.time));
-    }
-  }
-}
-
 function mover(peca, destino) {
   movingPeca = removePeca(peca);
 
@@ -229,16 +218,87 @@ function trocarTurno() {
 }
 
 function analisaCasa(casa) {
-  const peca = pecaSelecionada;
-
   if (casa.dataset.ocupado === "nao") {
     casasPossiveis.push(casa);
 
     return null;
   } else {
-    if (casa.firstChild.dataset.time !== peca.dataset.time)
+    if (casa.firstChild.dataset.time !== pecaSelecionada.dataset.time)
       return casa.firstChild;
   }
+}
+
+function analisarDireita(casa) {
+  const casaDireita = getDireitaDaCasa(casa);
+  if (!casaDireita) {
+    analisaCasa(casa);
+    return;
+  }
+
+  // console.log("Casa direita", casaDireita);
+
+  const pecaInimiga = analisaCasa(casaDireita);
+  if (pecaInimiga) {
+    // console.log("Peca inimiga", pecaInimiga);
+    const proxCasa = getCasaDireita(pecaInimiga);
+
+    // console.log("Prox casa direita", proxCasa);
+    if (proxCasa) {
+      const esquerdaDaProxCasa = getEsquerdaDaCasa(proxCasa);
+      const direitaDaProxCasa = getDireitaDaCasa(proxCasa);
+      if (temUmaPecaInimiga(direitaDaProxCasa)) {
+        // verificar protecao da peca
+        analisarDireita(proxCasa);
+      }
+
+      if (temUmaPecaInimiga(esquerdaDaProxCasa)) {
+        // verificar casa
+        console.log("analisando esquerda", proxCasa);
+        analisarEsquerda(proxCasa);
+      } else {
+        analisaCasa(proxCasa);
+      }
+    } else if (!proxCasa && !temUmaPecaInimiga(getEsquerdaDaCasa(casa)))
+      analisaCasa(casa);
+  }
+}
+
+function analisarEsquerda(casa) {
+  const casaEsquerda = getEsquerdaDaCasa(casa);
+  if (!casaEsquerda) {
+    analisaCasa(casa);
+    return;
+  }
+  console.log("Casa esquerda", casaEsquerda);
+
+  const pecaInimiga = analisaCasa(casaEsquerda);
+  if (pecaInimiga) {
+    console.log("Peca inimiga", pecaInimiga);
+    const proxCasa = getCasaEsquerda(pecaInimiga);
+
+    console.log("Prox casa esquerda", proxCasa);
+    if (proxCasa) {
+      const esquerdaDaProxCasa = getEsquerdaDaCasa(proxCasa);
+      const direitaDaProxCasa = getDireitaDaCasa(proxCasa);
+      if (temUmaPecaInimiga(direitaDaProxCasa)) {
+        // verificar protecao da peca
+        analisarDireita(proxCasa);
+      } else if (temUmaPecaInimiga(esquerdaDaProxCasa)) {
+        // verificar casa
+        analisarEsquerda(proxCasa);
+      } else {
+        analisaCasa(proxCasa);
+      }
+    } else if (!proxCasa && !temUmaPecaInimiga(getDireitaDaCasa(casa)))
+      analisaCasa(casa);
+  }
+}
+
+function temUmaPecaInimiga(casa) {
+  return (
+    casa.dataset.ocupado === "sim" &&
+    casa.firstChild.dataset.time !== pecaSelecionada.dataset.time
+  );
 }
 
 function ameacarPecaInimiga(pecaInimiga, novaCasa) {
@@ -286,14 +346,14 @@ function getCasaY(casa) {
   return parseInt(casa.dataset.position.split(",")[1]);
 }
 
-function getCasaDireita(peca, timeJogando) {
+function getCasaDireita(peca) {
   const posX = getCasaX(peca.parentNode);
   const posY = getCasaY(peca.parentNode);
 
   let novoX = posX + 1,
     novoY;
 
-  if (timeJogando === "branco") {
+  if (pecaSelecionada.dataset.time === "branco") {
     // x + 1; y + 1 direita cima
     // x - 1; y + 1 esquerda cima
     novoY = posY - 1;
@@ -308,14 +368,58 @@ function getCasaDireita(peca, timeJogando) {
   return getCasa(novoX, novoY);
 }
 
-function getCasaEsquerda(peca, timeJogando) {
+function getDireitaDaCasa(casa) {
+  const posX = getCasaX(casa);
+  const posY = getCasaY(casa);
+
+  let novoX = posX + 1,
+    novoY;
+
+  if (pecaSelecionada.dataset.time === "branco") {
+    // x + 1; y + 1 direita cima
+    // x - 1; y + 1 esquerda cima
+    novoY = posY - 1;
+  } else {
+    // x + 1; y - 1 direita baixo
+    // x - 1; y - 1 esquerda baixo
+    novoY = posY + 1;
+  }
+
+  if (novoX > 8 || novoX < 0 || novoY > 8 || novoY < 0) return null;
+
+  return getCasa(novoX, novoY);
+}
+
+function getCasaEsquerda(peca) {
   const posX = getCasaX(peca.parentNode);
   const posY = getCasaY(peca.parentNode);
 
   let novoX = posX - 1,
     novoY;
 
-  if (timeJogando === "branco") {
+  if (pecaSelecionada.dataset.time === "branco") {
+    // x + 1; y + 1 direita cima
+    // x - 1; y + 1 esquerda cima
+    novoY = posY - 1;
+  } else {
+    // x + 1; y - 1 direita baixo
+    // x - 1; y - 1 esquerda baixo
+    novoY = posY + 1;
+  }
+
+  if (novoX > 8 || novoX < 0 || novoY > 8 || novoY < 0) return null;
+
+  return getCasa(novoX, novoY);
+}
+
+function getEsquerdaDaCasa(casa) {
+  const posX = getCasaX(casa);
+  const posY = getCasaY(casa);
+
+  let novoX = posX - 1,
+    novoY;
+
+  if (pecaSelecionada.dataset.time === "branco") {
     // x + 1; y + 1 direita cima
     // x - 1; y + 1 esquerda cima
     novoY = posY - 1;
