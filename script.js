@@ -221,6 +221,7 @@ function movimentoSimples(peca, timeJogando) {
     casa.addEventListener("click", mover, { once: true });
   });
 }
+
 function mover(evento) {
   const novaCasa = evento.target;
 
@@ -253,6 +254,7 @@ function mover(evento) {
 
   limparSelecao();
 }
+
 function comerPeca(peca) {
   const posX = parseInt(peca.dataset.posX);
   const posY = parseInt(peca.dataset.posY);
@@ -276,12 +278,13 @@ function analisaCasa(casa, timeJogando, dir) {
       if (pecaDaCasa.dataset.time !== timeJogando) {
         if (verificarProtecao(pecaDaCasa, dir) === "desprotegida") {
           let novaCasa = getCasaDaFrente(pecaDaCasa, dir);
-          pecasAmeacadas.push([pecaDaCasa, novaCasa])
+          pecasAmeacadas.push([pecaDaCasa, novaCasa]);
         }
       }
     }
   }
 }
+
 function verificarProtecao(pecaAmeacada, dir) {
   const casaDaPeca = getCasaDaFrente(pecaAmeacada, dir);
   if (casaDaPeca !== null && casaDaPeca.dataset.ocupado === "nao")
@@ -289,6 +292,7 @@ function verificarProtecao(pecaAmeacada, dir) {
 
   return "protegida";
 }
+
 function analisaCasasAdjacentes(casa, peca) {
   // x + 1; y - 1 direita cima
   // x - 1; y + 1 esquerda cima
@@ -306,7 +310,10 @@ function analisaCasasAdjacentes(casa, peca) {
   if (casaDireitaCima !== null && casaDireitaCima.dataset.ocupado === "sim") {
     const pecaAux = casaDireitaCima.firstChild;
     if (verificarProtecao(pecaAux, "direita") === "desprotegida") {
-      pecasAmeacadas.push([[pecaAux, peca], getCasaDaFrente(pecaAux, "direita")]);
+      pecasAmeacadas.push([
+        [pecaAux, peca],
+        getCasaDaFrente(pecaAux, "direita"),
+      ]);
     }
   }
 }
@@ -319,6 +326,7 @@ function coroarPeca(peca) {
 function getCasa(x, y) {
   return document.querySelector(`td[data-position="${x},${y}"]`);
 }
+
 function getCasaDireita(peca, time) {
   const posX = parseInt(peca.dataset.posX);
   const posY = parseInt(peca.dataset.posY);
@@ -338,6 +346,7 @@ function getCasaDireita(peca, time) {
 
   return getCasa(novoX, novoY);
 }
+
 function getCasaEsquerda(peca, time) {
   const posX = parseInt(peca.dataset.posX);
   const posY = parseInt(peca.dataset.posY);
@@ -356,6 +365,7 @@ function getCasaEsquerda(peca, time) {
 
   return getCasa(novoX, novoY);
 }
+
 function getCasaDaFrente(peca, dir) {
   const posX = parseInt(peca.dataset.posX);
   const posY = parseInt(peca.dataset.posY);
@@ -374,16 +384,20 @@ function getCasaDaFrente(peca, dir) {
 
   return document.querySelector(`td[data-position="${novoX},${novoY}"]`);
 }
+
 function addPeca(casa, peca) {
   casa.appendChild(peca);
   casa.dataset.ocupado = "sim";
 }
+
 function pintar(casa, cor) {
   if (casa !== null) casa.classList.add(cor);
 }
+
 function limpar(casa, cor) {
   casa.classList.remove(cor);
 }
+
 function limparSelecao() {
   pecaSelecionada = null;
   possibilidades = 0;
