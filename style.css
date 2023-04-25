@@ -16,6 +16,7 @@ body{
   margin: 0 auto;
   border: 2px solid #181818;
   border-collapse: collapse;
+  cursor: pointer;
 }
 #board tr td {
   width: 60px;
