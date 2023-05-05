@@ -32,7 +32,8 @@ var testingPieces = [
   { posY: 7, posX: 6, time: "branco", color: "white" },
   { posY: 6, posX: 1, time: "preto", color: "black" },
   { posY: 6, posX: 3, time: "preto", color: "black" },
-  { posY: 4, posX: 5, time: "preto", color: "black" },
+  { posY: 6, posX: 5, time: "preto", color: "black" },
+  // { posY: 4, posX: 5, time: "preto", color: "black" },
   { posY: 4, posX: 3, time: "preto", color: "black" },
   { posY: 2, posX: 7, time: "preto", color: "black" },
   { posY: 2, posX: 5, time: "preto", color: "black" },
@@ -195,7 +196,7 @@ function trocarTurno() {
 
 function verificaPossiveisMovimentos(casa) {
   validarCasaEsquerda(casa);
-  validarCasaDireita(casa);
+  validarCasaDireita(casa, false);
 
   // verificar se a casa de esquerda esta livre
 
@@ -208,72 +209,44 @@ function verificaPossiveisMovimentos(casa) {
 
 const validarCasaEsquerda = (casa) => {
   const esq = getEsquerdaDaCasa(casa);
+
   // casa esquerda livre
   if (casaPossivel(esq)) addCasaPossivel(esq);
-  else {
-    if (temUmaPecaInimiga(esq)) {
-      const novaCasa = getEsquerdaDaCasa(esq);
-      validarNovaCasa(esq, novaCasa);
+  else if (temUmaPecaInimiga(esq)) {
+    if (!estaProtegida(esq, getEsquerdaDaCasa(esq))) {
+      console.log("Comer peca", esq);
+
+      const novaCasa = validarNovaCasa(getEsquerdaDaCasa(esq));
+      if (novaCasa) {
+        console.log("com nova casa", novaCasa);
+      }
     }
   }
 };
 
 const validarCasaDireita = (casa) => {
   const dir = getDireitaDaCasa(casa);
+
   // casa direita livre
   if (casaPossivel(dir)) addCasaPossivel(dir);
-  else {
-    if (temUmaPecaInimiga(dir)) {
-      const novaCasa = getDireitaDaCasa(dir);
-      validarNovaCasa(dir, novaCasa);
+  else if (temUmaPecaInimiga(dir)) {
+    // verifica se a peça esta protegida
+    if (!estaProtegida(dir, getDireitaDaCasa(dir))) {
+      console.log("Comer peca", dir);
+
+      const novaCasa = validarNovaCasa(getDireitaDaCasa(dir));
+      if (novaCasa) {
+        console.log("nova casa", novaCasa);
+      }
     }
   }
 };
 
-const validarNovaCasa = (peca, casa) => {
+const validarNovaCasa = (casa) => {
   // caso de uso base
   // caso nao tenha nenhuma peça
   // add aos movimentos possiveis
-  if (nenhumaPecaInimigaAmecada(casa)) {
-    addCasaPossivel(casa);
-  }
-
-  if (pecaInimigaEmAlgumDosLados(casa)) {
-    if (temUmaPecaInimiga(getEsquerdaDaCasa(casa))) validarCasaEsquerda(casa);
-    else validarCasaDireita(casa);
-  }
-
-  if (pecaInimigaNosDoisLados(casa)) {
-    validarCasaDireita(casa);
-    validarCasaEsquerda(casa);
-  }
-};
-
-const addCasaPossivel = (casa) => {
-  if (casa && casaPossivel(casa)) casasPossiveis.push(casa);
-};
-
-const nenhumaPecaInimigaAmecada = (casa) => {
-  return (
-    !temUmaPecaInimiga(getDireitaDaCasa(casa)) &&
-    !temUmaPecaInimiga(getEsquerdaDaCasa(casa))
-  );
-};
-
-const pecaInimigaEmAlgumDosLados = (casa) => {
-  return (
-    (temUmaPecaInimiga(getDireitaDaCasa(casa)) &&
-      !temUmaPecaInimiga(getEsquerdaDaCasa(casa))) ||
-    (!temUmaPecaInimiga(getDireitaDaCasa(casa)) &&
-      temUmaPecaInimiga(getEsquerdaDaCasa(casa)))
-  );
-};
-
-const pecaInimigaNosDoisLados = (casa) => {
-  return (
-    temUmaPecaInimiga(getDireitaDaCasa(casa)) &&
-    temUmaPecaInimiga(getEsquerdaDaCasa(casa))
-  );
+  console.log("Validar Nova casa", casa);
 };
 
 function casaPossivel(casa) {
@@ -285,7 +258,7 @@ function casaPossivel(casa) {
 }
 
 function estaProtegida(casa, proxCasa) {
-  if (!casa || !proxCasa) return;
+  if (!casa || !proxCasa) return true;
 
   const pecaAmecada = casa.firstChild;
   if (pecaAmecada && proxCasa)
@@ -454,6 +427,7 @@ function limparCasasPossiveis() {
     limpar(casa, "verde");
   });
 
+  pecasAmecadas = [];
   casasPossiveis = [];
 }
 
