@@ -238,7 +238,10 @@ const validarNovaCasa = (peca, casa) => {
     addCasaPossivel(casa);
   }
 
-  if (pecaInimigaEmAlgumDosLados(casa)) console.log("Esquerda ou direita");
+  if (pecaInimigaEmAlgumDosLados(casa)) {
+    if (temUmaPecaInimiga(getEsquerdaDaCasa(casa))) validarCasaEsquerda(casa);
+    else validarCasaDireita(casa);
+  }
 
   if (pecaInimigaNosDoisLados(casa)) {
     validarCasaDireita(casa);
