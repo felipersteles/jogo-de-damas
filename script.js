@@ -103,7 +103,6 @@ var vezDoBranco = true;
 
 var temQueComer = false;
 var casasPossiveis = [];
-var comerPecas = [];
 
 // mostrar de quem é a vez
 var timeJogando = document.getElementById("jogando");
@@ -160,7 +159,7 @@ function game() {
       if (pecaSelecionada !== null) {
         limparCasasPossiveis();
         const casaDaPecaSelecionada = pecaSelecionada.parentNode;
-        verificaPossiveisMovimentos(casaDaPecaSelecionada);
+        verificaPossiveisMovimentos(casaDaPecaSelecionada, false);
       }
     }
 
@@ -193,16 +192,8 @@ function trocarTurno() {
 }
 
 function verificaPossiveisMovimentos(casa) {
-  // verificar se a casa da direita esta livre
-  const casaDir = getDireitaDaCasa(casa);
-  if (casaPossivel(casaDir)) {
-    casasPossiveis.push(casaDir);
-  } else if (casaExiste(casaDir) && temUmaPecaInimiga(casaDir)) {
-    const proxCasa = getDireitaDaCasa(casaDir);
-    if (proxCasa && !estaProtegida(casaDir, proxCasa)) {
-      verificaProxPossiveisMovimentos(proxCasa);
-    }
-  }
+  validarCasaEsquerda(casa);
+  validarCasaDireita(casa);
 
   // verificar se a casa de esquerda esta livre
 
@@ -210,29 +201,53 @@ function verificaPossiveisMovimentos(casa) {
   // faz-se um filtro para permitir
   // o movimento somente para o maior Y
 
-  filtrarCasasPossiveis();
+  pintarCasasPossiveis();
 }
 
-function verificaProxPossiveisMovimentos(casa) {
-  const casaDir = getDireitaDaCasa(casa);
-  const casaEsq = getEsquerdaDaCasa(casa);
-
-  if (casaDir && temUmaPecaInimiga(casaDir)) {
-    const proxCasa = getDireitaDaCasa(casaDir);
-    if (proxCasa && !estaProtegida(casaDir, proxCasa)) {
-      casasPossiveis.push(proxCasa);
-      verificaProxPossiveisMovimentos(proxCasa);
+const validarCasaEsquerda = (casa) => {
+  const esq = getEsquerdaDaCasa(casa);
+  // casa esquerda livre
+  if (casaPossivel(esq)) casasPossiveis.push(esq);
+  else {
+    if (temUmaPecaInimiga(esq)) {
+      const novaCasa = getEsquerdaDaCasa(esq);
+      if (casaPossivel(novaCasa)) {
+        if (temUmaPecaInimiga(getDireitaDaCasa(novaCasa)))
+          validarCasaDireita(novaCasa);
+        else if (temUmaPecaInimiga(getEsquerdaDaCasa(novaCasa)))
+          validarCasaEsquerda(novaCasa);
+        else casasPossiveis.push(novaCasa);
+      }
     }
   }
+};
 
-  if (casaEsq && temUmaPecaInimiga(casaEsq)) {
-    const proxCasa = getEsquerdaDaCasa(casaEsq);
-    if (proxCasa && !estaProtegida(casaEsq, proxCasa)) {
-      casasPossiveis.push(proxCasa);
-      verificaProxPossiveisMovimentos(proxCasa);
+const validarCasaDireita = (casa) => {
+  const dir = getDireitaDaCasa(casa);
+  // casa direita livre
+  if (casaPossivel(dir)) casasPossiveis.push(dir);
+  else {
+    if (temUmaPecaInimiga(dir)) {
+      const novaCasa = getDireitaDaCasa(dir);
+      if (casaPossivel(novaCasa)) {
+        if (temUmaPecaInimiga(getDireitaDaCasa(novaCasa)))
+          validarCasaDireita(novaCasa);
+        else if (!getEsquerdaDaCasa(novaCasa)) casasPossiveis.push(novaCasa);
+        if (temUmaPecaInimiga(getEsquerdaDaCasa(novaCasa)))
+          validarCasaEsquerda(novaCasa);
+        else if (!getDireitaDaCasa(novaCasa)) casasPossiveis.push(novaCasa);
+
+        if (
+          !temUmaPecaInimiga(getEsquerdaDaCasa(novaCasa)) &&
+          !temUmaPecaInimiga(getDireitaDaCasa(novaCasa))
+        )
+          casasPossiveis.push(novaCasa);
+      }
     }
   }
-}
+};
+
+const comerPecas = (casa, novaCasa) => {};
 
 function filtrarCasasPossiveis() {
   var maiorY = 8;
@@ -253,7 +268,8 @@ function casaPossivel(casa) {
   if (!casa) return false;
 
   if (casa.dataset.ocupado === "nao") return true;
-  else if (temUmaPecaInimiga(casa)) return false;
+
+  return false;
 }
 
 function estaProtegida(casa, proxCasa) {
