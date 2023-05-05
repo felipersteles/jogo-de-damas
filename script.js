@@ -103,6 +103,7 @@ var vezDoBranco = true;
 
 var temQueComer = false;
 var casasPossiveis = [];
+var pecasAmecadas = [];
 
 // mostrar de quem é a vez
 var timeJogando = document.getElementById("jogando");
@@ -159,7 +160,7 @@ function game() {
       if (pecaSelecionada !== null) {
         limparCasasPossiveis();
         const casaDaPecaSelecionada = pecaSelecionada.parentNode;
-        verificaPossiveisMovimentos(casaDaPecaSelecionada, false);
+        verificaPossiveisMovimentos(casaDaPecaSelecionada);
       }
     }
 
@@ -171,6 +172,7 @@ function game() {
 
 function performarUmaJogada(destino) {
   if (validarDestino(destino)) {
+    console.log("Comer", pecasAmecadas);
     mover(pecaSelecionada, destino);
   } else alert("Escolha uma posição possivel.");
 }
@@ -207,17 +209,11 @@ function verificaPossiveisMovimentos(casa) {
 const validarCasaEsquerda = (casa) => {
   const esq = getEsquerdaDaCasa(casa);
   // casa esquerda livre
-  if (casaPossivel(esq)) casasPossiveis.push(esq);
+  if (casaPossivel(esq)) addCasaPossivel(esq);
   else {
     if (temUmaPecaInimiga(esq)) {
       const novaCasa = getEsquerdaDaCasa(esq);
-      if (casaPossivel(novaCasa)) {
-        if (temUmaPecaInimiga(getDireitaDaCasa(novaCasa)))
-          validarCasaDireita(novaCasa);
-        else if (temUmaPecaInimiga(getEsquerdaDaCasa(novaCasa)))
-          validarCasaEsquerda(novaCasa);
-        else casasPossiveis.push(novaCasa);
-      }
+      validarNovaCasa(esq, novaCasa);
     }
   }
 };
@@ -225,44 +221,57 @@ const validarCasaEsquerda = (casa) => {
 const validarCasaDireita = (casa) => {
   const dir = getDireitaDaCasa(casa);
   // casa direita livre
-  if (casaPossivel(dir)) casasPossiveis.push(dir);
+  if (casaPossivel(dir)) addCasaPossivel(dir);
   else {
     if (temUmaPecaInimiga(dir)) {
       const novaCasa = getDireitaDaCasa(dir);
-      if (casaPossivel(novaCasa)) {
-        if (temUmaPecaInimiga(getDireitaDaCasa(novaCasa)))
-          validarCasaDireita(novaCasa);
-        else if (!getEsquerdaDaCasa(novaCasa)) casasPossiveis.push(novaCasa);
-        if (temUmaPecaInimiga(getEsquerdaDaCasa(novaCasa)))
-          validarCasaEsquerda(novaCasa);
-        else if (!getDireitaDaCasa(novaCasa)) casasPossiveis.push(novaCasa);
-
-        if (
-          !temUmaPecaInimiga(getEsquerdaDaCasa(novaCasa)) &&
-          !temUmaPecaInimiga(getDireitaDaCasa(novaCasa))
-        )
-          casasPossiveis.push(novaCasa);
-      }
+      validarNovaCasa(dir, novaCasa);
     }
   }
 };
 
-const comerPecas = (casa, novaCasa) => {};
+const validarNovaCasa = (peca, casa) => {
+  // caso de uso base
+  // caso nao tenha nenhuma peça
+  // add aos movimentos possiveis
+  if (nenhumaPecaInimigaAmecada(casa)) {
+    addCasaPossivel(casa);
+  }
 
-function filtrarCasasPossiveis() {
-  var maiorY = 8;
-  var casaAux;
-  casasPossiveis.forEach((casa) => {
-    if (getCasaY(casa) < maiorY) {
-      maiorY = getCasaY(casa);
-      casaAux = casa;
-    }
-  });
+  if (pecaInimigaEmAlgumDosLados(casa)) console.log("Esquerda ou direita");
 
-  console.log(casaAux);
+  if (pecaInimigaNosDoisLados(casa)) {
+    validarCasaDireita(casa);
+    validarCasaEsquerda(casa);
+  }
+};
 
-  // pintarCasasPossiveis();
-}
+const addCasaPossivel = (casa) => {
+  if (casa && casaPossivel(casa)) casasPossiveis.push(casa);
+};
+
+const nenhumaPecaInimigaAmecada = (casa) => {
+  return (
+    !temUmaPecaInimiga(getDireitaDaCasa(casa)) &&
+    !temUmaPecaInimiga(getEsquerdaDaCasa(casa))
+  );
+};
+
+const pecaInimigaEmAlgumDosLados = (casa) => {
+  return (
+    (temUmaPecaInimiga(getDireitaDaCasa(casa)) &&
+      !temUmaPecaInimiga(getEsquerdaDaCasa(casa))) ||
+    (!temUmaPecaInimiga(getDireitaDaCasa(casa)) &&
+      temUmaPecaInimiga(getEsquerdaDaCasa(casa)))
+  );
+};
+
+const pecaInimigaNosDoisLados = (casa) => {
+  return (
+    temUmaPecaInimiga(getDireitaDaCasa(casa)) &&
+    temUmaPecaInimiga(getEsquerdaDaCasa(casa))
+  );
+};
 
 function casaPossivel(casa) {
   if (!casa) return false;
@@ -360,6 +369,8 @@ function getCasaDireita(peca) {
 }
 
 function getDireitaDaCasa(casa) {
+  if (!casa) return null;
+
   const posX = getCasaX(casa);
   const posY = getCasaY(casa);
 
@@ -404,6 +415,8 @@ function getCasaEsquerda(peca) {
 }
 
 function getEsquerdaDaCasa(casa) {
+  if (!casa) return null;
+
   const posX = getCasaX(casa);
   const posY = getCasaY(casa);
 
@@ -432,6 +445,8 @@ function pintarCasasPossiveis() {
 }
 
 function limparCasasPossiveis() {
+  if (!casasPossiveis || casasPossiveis.length === 0) return;
+
   casasPossiveis.forEach((casa) => {
     limpar(casa, "verde");
   });
