@@ -1,41 +1,56 @@
-body{
+body, html{
+  height: 100%;
+  margin: 0;
+  background: #030020;
+  width: 100%;
     display: flex;
     flex-direction: row;
-}
-
-.aux{
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 1rem;
+    justify-content: space-around;
+    text-align: center;
 }
 
-#board {
+button{
+  cursor: pointer;
+}
+
+h2{
+  color: white;
+}
+
+#board3x3, #board5x5, #board7x7 {
   padding: 0px;
   margin: 0 auto;
   border: 2px solid #181818;
   border-collapse: collapse;
   cursor: pointer;
 }
-#board tr td {
+
+tr td {
   width: 60px;
   height: 60px;
 }
-#board tr:nth-child(2n) td:nth-child(2n + 1) {
-  background: #9f9f9f;
+
+tr:nth-child(n) td:nth-child(n + 1) {
+  background: #272727;
 }
-#board tr:nth-child(2n + 1) td:nth-child(2n) {
+
+tr:nth-child(2n) td:nth-child(2n + 1) {
   background: #9f9f9f;
 }
 
-#board .black {
+tr:nth-child(2n + 1) td:nth-child(2n) {
+  background: #9f9f9f;
+}
+
+#peca.black {
   width: 100%;
   height: 100%;
   border-radius: 50%;
   background-color: black;
 }
-#board .white {
+
+#peca.white {
   width: 100%;
   height: 100%;
   border-radius: 50%;
@@ -49,12 +64,27 @@ body{
   background-color: rgba(0, 128, 0, 0.5);
 }
 
-#board tr td.vermelho {
+table tr td.vermelho {
   background-color: red !important;
 }
-#board tr td.amarelo {
+table tr td.amarelo {
   background-color: yellow !important;
 }
-#board tr td.verde {
+table tr td.verde {
   background-color: green !important;
+}
+
+#controle{
+  background-color: gray;
+  padding: 8px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.box{
+  display: flex;
+  flex-direction: column;
+  padding: 1%;
 }

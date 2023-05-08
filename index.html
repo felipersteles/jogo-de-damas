@@ -1,27 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="author" content="Felipe Teles"/>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="author" content="Felipe Teles" />
 
-    <link rel="shortcut icon" href="/assets/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="/assets/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="style.css" />
 
-    <title>Jodo de damas</title>
-</head>
-<body>
-    <div class="aux">
-        <span id="pretas"></span>
-        <span id="brancas"></span>
-        <button id="posicionar">Posicionar as peças</button>
-        <button id="start">Start game</button>
-        <button id="acabar">Acabar o jogo</button>
-        <span id="jogando"></span>
-        <span id="movimentos"></span>
+    <title id="titulo">Jodo de damas</title>
+  </head>
+  <body>
+    <div>
+      <h2 id="tituloTabuleiro"></h2>
+      <table id="board"></table>
     </div>
-    <table id="board"></table>
-</body>
-<script src="script.js"></script>
+    <div>
+      <h2>Controle do jogo</h2>
+      <div id="controle">
+        <div class="box">
+          <label for="tamanho">Tamanho do tabuleiro</label>
+          <input
+            id="sizeInput"
+            placeholder="8"
+            value="8"
+            name="tamanho"
+            type="number"
+          />
+        </div>
+        <button id="gerar">gerar tabuleiro</button>
+
+        <div class="box"></div>
+        <button id="comecar">começar jogo</button>
+      </div>
+
+      <div id="controle">
+        <label for="brancas">branca</label>
+        <input id="posTime" type="checkbox" />
+        <button id="posicionarPeca">Posicionar peça</button>
+      </div>
+    </div>
+  </body>
+  <script src="script.js"></script>
 </html>
