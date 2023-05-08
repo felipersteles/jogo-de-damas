@@ -10,9 +10,9 @@ const h2 = document.getElementById("tituloTabuleiro");
 
 const gerarButton = document.getElementById("gerar");
 const sizeInput = document.getElementById("sizeInput");
+var size = sizeInput.value <= 0 ? 8 : sizeInput.value;
 
 gerarButton.addEventListener("click", () => {
-  const size = sizeInput.value <= 0 ? 8 : sizeInput.value;
   gerarTabuleiro(tabuleirosEl, size, size);
   h2.innerText = "Estudos HTML, Css, JavaScript";
 });
@@ -224,10 +224,29 @@ const comer = (casas) => {
 
 const mover = (src, target) => {
   const peca = src.removeChild(src.firstChild);
-  target.appendChild(peca);
+
+  if (peca.getAttribute("time") === "branco" && posicao(target)[0] == 0) {
+    const dama = coroar(peca);
+    target.appendChild(dama);
+  } else if (
+    peca.getAttribute("time") !== "branco" &&
+    posicao(target)[0] == size - 1
+  ) {
+    const dama = coroar(peca);
+    target.appendChild(dama);
+  } else {
+    target.appendChild(peca);
+  }
+
   limparSelecao();
 
   vezDoBranco = !vezDoBranco;
+};
+
+const coroar = (peca) => {
+  peca.setAttribute("id", "dama");
+  peca.innerText = "♛";
+  return peca;
 };
 
 const limparSelecao = () => {
