@@ -110,8 +110,8 @@ const t = sizeInput.value;
 const testePecas = [
   { posY: 0, posX: t - 1, time: "branco", color: "white" },
   { posY: 0, posX: 1, time: "branco", color: "white" },
-  { posY: 6, posX: 5, time: "preto", color: "black" },
-  // { posY: 7, posX: 6, time: "preto", color: "black" },
+  { posY: 5, posX: 4, time: "preto", color: "black" },
+  { posY: 7, posX: 6, time: "preto", color: "black" },
   { posY: 4, posX: 5, time: "preto", color: "black" },
 ];
 
@@ -220,22 +220,23 @@ const comer = (casas) => {
   });
 };
 
-const verificarMovimentosDama = (casa) => {
+const verificarMovimentosDama = (casa, aux) => {
   var movimentoPossiveis = [];
   var aux = [];
 
   var esqBaixo = esqCosta(casa);
   while (esqBaixo !== null) {
-    if (vazia(esqBaixo))
-      aux.length > 0
-        ? movimentoPossiveis.push({ destino: esqBaixo, comer: aux })
-        : movimentoPossiveis.push({ destino: esqBaixo });
-    else if (pecaInimiga(esqBaixo) && !protegida(esqCosta(esqBaixo))) {
-      aux.push(esqBaixo);
+    if (vazia(esqBaixo)) movimentoPossiveis.push({ destino: esqBaixo });
+    else if (vazia(esqBaixo) && aux.length > 0) {
+      movimentoPossiveis.push({ destino: esqBaixo, comer: aux });
+    } else if (pecaInimiga(esqBaixo) && !protegida(esqCosta(esqBaixo))) {
+      console.log("tomada composta");
     }
 
     esqBaixo = esqCosta(esqBaixo);
   }
+
+  aux = [];
 
   var esqCima = esqFrente(casa);
   while (esqCima !== null) {
@@ -244,7 +245,7 @@ const verificarMovimentosDama = (casa) => {
         ? movimentoPossiveis.push({ destino: esqCima, comer: aux })
         : movimentoPossiveis.push({ destino: esqCima });
     else if (pecaInimiga(esqCima) && !protegida(esqFrente(esqCima))) {
-      aux.push(esqCima);
+      console.log("tomada composta");
     }
 
     esqCima = esqFrente(esqCima);
@@ -253,12 +254,11 @@ const verificarMovimentosDama = (casa) => {
 
   var dirBaixo = dirCosta(casa);
   while (dirBaixo !== null) {
-    if (vazia(dirBaixo))
-      aux.length > 0
-        ? movimentoPossiveis.push({ destino: dirBaixo, comer: aux })
-        : movimentoPossiveis.push({ destino: dirBaixo });
-    else if (pecaInimiga(dirBaixo) && !protegida(dirCosta(dirBaixo))) {
-      aux.push(dirBaixo);
+    if (vazia(dirBaixo)) movimentoPossiveis.push({ destino: dirBaixo });
+    else if (vazia(dirBaixo) && aux.length > 0) {
+      movimentoPossiveis.push({ destino: dirBaixo, comer: aux });
+    } else if (pecaInimiga(dirBaixo) && !protegida(dirCosta(dirBaixo))) {
+      console.log("tomada composta");
     }
 
     dirBaixo = dirCosta(dirBaixo);
@@ -272,7 +272,7 @@ const verificarMovimentosDama = (casa) => {
         ? movimentoPossiveis.push({ destino: dirCima, comer: aux })
         : movimentoPossiveis.push({ destino: dirCima });
     else if (pecaInimiga(dirCima) && !protegida(dirFrente(dirCima))) {
-      aux.push(dirCima);
+      console.log("tomada composta");
     }
 
     dirCima = dirFrente(dirCima);
