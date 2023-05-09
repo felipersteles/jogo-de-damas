@@ -111,12 +111,12 @@ const testePecas = [
   { posY: 0, posX: t - 1, time: "branco", color: "white" },
   { posY: 0, posX: 1, time: "branco", color: "white" },
   { posY: 5, posX: 4, time: "preto", color: "black" },
-  { posY: 7, posX: 6, time: "preto", color: "black" },
+  { posY: 3, posX: 2, time: "preto", color: "black" },
   { posY: 4, posX: 5, time: "preto", color: "black" },
 ];
 
 const start = () => {
-  posicionarPecas(testePecas);
+  posicionarPecas(initialPieces);
   game(15); // entra no mundo do jogo
 };
 
@@ -203,7 +203,8 @@ const update = () => {
       if (movimentosPossiveis.length > 0) {
         movimentosPossiveis.forEach((mov) => {
           if (e.target === mov.destino) {
-            if (mov.comer && mov.comer.length > 0) comer(mov.comer);
+            if (mov.comer && mov.comer.length > 0)
+              comer(mov.comer, ehDama(pecaSelecionada));
             mover(pecaSelecionada.parentNode, mov.destino);
           }
         });
@@ -212,72 +213,120 @@ const update = () => {
   };
 };
 
-const comer = (casas) => {
+const comer = (casas, dama = false) => {
   casas.forEach((casa, key) => {
-    if (key % 2 === 0) {
+    if (!dama && key % 2 === 0) {
+      casa.innerHTML = "";
+    } else {
       casa.innerHTML = "";
     }
   });
 };
 
-const verificarMovimentosDama = (casa, aux) => {
+const verificarMovimentosDama = (casa, dir = null) => {
   var movimentoPossiveis = [];
   var aux = [];
+  var dest;
+
+  var dirBaixo = dirCosta(casa);
+  while (dirBaixo !== null) {
+    if (vazia(dirBaixo) && !dir) movimentoPossiveis.push({ destino: dirBaixo });
+    else if (pecaInimiga(dirBaixo)) {
+      if (protegida(dirCosta(dirBaixo))) dirBaixo = null;
+      else {
+        if (dir) {
+          if (dirBaixo !== dir) {
+            aux.push(dirBaixo, dirCosta(dirBaixo));
+          }
+
+          return aux;
+        } else {
+          const v = verificarMovimentosDama(dirCosta(dirBaixo), dirBaixo);
+          aux.push(dirBaixo);
+          aux.push(v[0]);
+          dest = v[1];
+        }
+      }
+    }
+
+    dirBaixo = dirCosta(dirBaixo);
+  }
 
   var esqBaixo = esqCosta(casa);
   while (esqBaixo !== null) {
-    if (vazia(esqBaixo)) movimentoPossiveis.push({ destino: esqBaixo });
-    else if (vazia(esqBaixo) && aux.length > 0) {
-      movimentoPossiveis.push({ destino: esqBaixo, comer: aux });
-    } else if (pecaInimiga(esqBaixo) && !protegida(esqCosta(esqBaixo))) {
-      console.log("tomada composta");
+    if (vazia(esqBaixo) && !dir) movimentoPossiveis.push({ destino: esqBaixo });
+    else if (pecaInimiga(esqBaixo)) {
+      if (protegida(esqCosta(esqBaixo))) esqBaixo = null;
+      else {
+        if (dir) {
+          if (esqBaixo !== dir) {
+            aux.push(esqBaixo, esqCosta(esqBaixo));
+          }
+
+          return aux;
+        } else {
+          const v = verificarMovimentosDama(esqCosta(esqBaixo), esqBaixo);
+          aux.push(esqBaixo);
+          aux.push(v[0]);
+          dest = v[1];
+        }
+      }
     }
 
     esqBaixo = esqCosta(esqBaixo);
   }
 
-  aux = [];
-
   var esqCima = esqFrente(casa);
   while (esqCima !== null) {
-    if (vazia(esqCima))
-      aux.length > 0
-        ? movimentoPossiveis.push({ destino: esqCima, comer: aux })
-        : movimentoPossiveis.push({ destino: esqCima });
-    else if (pecaInimiga(esqCima) && !protegida(esqFrente(esqCima))) {
-      console.log("tomada composta");
+    if (vazia(esqCima) && !dir) movimentoPossiveis.push({ destino: esqCima });
+    else if (pecaInimiga(esqCima)) {
+      if (protegida(esqFrente(esqCima))) esqCima = null;
+      else {
+        if (dir) {
+          if (esqCima !== dir) {
+            aux.push(esqCima, esqFrente(esqCima));
+          }
+
+          return aux;
+        } else {
+          const v = verificarMovimentosDama(esqFrente(esqCima), esqCima);
+          aux.push(esqCima);
+          aux.push(v[0]);
+          dest = v[1];
+        }
+      }
     }
 
     esqCima = esqFrente(esqCima);
   }
-  aux = [];
-
-  var dirBaixo = dirCosta(casa);
-  while (dirBaixo !== null) {
-    if (vazia(dirBaixo)) movimentoPossiveis.push({ destino: dirBaixo });
-    else if (vazia(dirBaixo) && aux.length > 0) {
-      movimentoPossiveis.push({ destino: dirBaixo, comer: aux });
-    } else if (pecaInimiga(dirBaixo) && !protegida(dirCosta(dirBaixo))) {
-      console.log("tomada composta");
-    }
-
-    dirBaixo = dirCosta(dirBaixo);
-  }
-  aux = [];
 
   var dirCima = dirFrente(casa);
   while (dirCima !== null) {
-    if (vazia(dirCima))
-      aux.length > 0
-        ? movimentoPossiveis.push({ destino: dirCima, comer: aux })
-        : movimentoPossiveis.push({ destino: dirCima });
-    else if (pecaInimiga(dirCima) && !protegida(dirFrente(dirCima))) {
-      console.log("tomada composta");
+    if (vazia(dirCima) && !dir) movimentoPossiveis.push({ destino: dirCima });
+    else if (pecaInimiga(dirCima)) {
+      if (protegida(dirFrente(dirCima))) dirCima = null;
+      else {
+        if (dir) {
+          if (dirCima !== dir) {
+            aux.push(dirCima, dirFrente(dirCima));
+          }
+
+          return aux;
+        } else {
+          const v = verificarMovimentosDama(dirFrente(dirCima), dirCima);
+          aux.push(dirCima);
+          aux.push(v[0]);
+          dest = v[1];
+        }
+      }
     }
 
     dirCima = dirFrente(dirCima);
   }
-  aux = [];
+
+  if (!dir) {
+    movimentoPossiveis.push({ destino: dest, comer: aux });
+  }
 
   return movimentoPossiveis;
 };
@@ -310,9 +359,12 @@ const coroar = (peca) => {
 };
 
 const limparSelecao = () => {
-  movimentosPossiveis.forEach((mov) => {
-    limpar(mov.destino, "verde");
-  });
+  if (!movimentosPossiveis) return;
+
+  if (movimentosPossiveis.length > 0)
+    movimentosPossiveis.forEach((mov) => {
+      limpar(mov.destino, "verde");
+    });
 
   movimentosPossiveis = [];
   pecaSelecionada = null;
@@ -340,26 +392,22 @@ const verificaMovimentos = (casaDaPeca, time, estaComendo = false) => {
             comer: aux,
           });
       }
+    }
 
-      if (esqFrente(casaDaPeca)) {
-        if (vazia(esqFrente(casaDaPeca)) && !estaComendo)
-          movimentosPossiveis.push({ destino: esqFrente(casaDaPeca) });
-        else if (
-          pecaInimiga(esqFrente(casaDaPeca), time) &&
-          !protegida(esqFrente(esqFrente(casaDaPeca)))
-        ) {
-          aux = verificaMovimentos(
-            esqFrente(esqFrente(casaDaPeca)),
-            time,
-            true
-          );
-          aux.push(esqFrente(casaDaPeca), esqFrente(esqFrente(casaDaPeca)));
-          if (!estaComendo)
-            movimentosPossiveis.push({
-              destino: aux[1],
-              comer: aux,
-            });
-        }
+    if (esqFrente(casaDaPeca)) {
+      if (vazia(esqFrente(casaDaPeca)) && !estaComendo)
+        movimentosPossiveis.push({ destino: esqFrente(casaDaPeca) });
+      else if (
+        pecaInimiga(esqFrente(casaDaPeca), time) &&
+        !protegida(esqFrente(esqFrente(casaDaPeca)))
+      ) {
+        aux = verificaMovimentos(esqFrente(esqFrente(casaDaPeca)), time, true);
+        aux.push(esqFrente(casaDaPeca), esqFrente(esqFrente(casaDaPeca)));
+        if (!estaComendo)
+          movimentosPossiveis.push({
+            destino: aux[1],
+            comer: aux,
+          });
       }
     }
   } else {
@@ -398,7 +446,13 @@ const verificaMovimentos = (casaDaPeca, time, estaComendo = false) => {
     }
   }
 
+  const comerPecas = movimentosPossiveis.filter((mov) => {
+    return mov.comer;
+  });
+
   if (estaComendo) return aux;
+
+  if (comerPecas && comerPecas.length > 0) return comerPecas;
 
   return movimentosPossiveis;
 };
@@ -438,6 +492,8 @@ const pecaBranca = (peca) => {
 };
 
 const dirFrente = (casa) => {
+  if (!casa) return null;
+
   const pos = [
     parseInt(casa.dataset.position[0]),
     parseInt(casa.dataset.position[2]),
@@ -449,6 +505,8 @@ const dirFrente = (casa) => {
 };
 
 const esqFrente = (casa) => {
+  if (!casa) return null;
+
   const pos = [
     parseInt(casa.dataset.position[0]),
     parseInt(casa.dataset.position[2]),
@@ -460,6 +518,8 @@ const esqFrente = (casa) => {
 };
 
 const esqCosta = (casa) => {
+  if (!casa) return null;
+
   const pos = [
     parseInt(casa.dataset.position[0]),
     parseInt(casa.dataset.position[2]),
@@ -471,7 +531,7 @@ const esqCosta = (casa) => {
 };
 
 const dirCosta = (casa) => {
-  if (!casa) return;
+  if (!casa) return null;
 
   const pos = [
     parseInt(casa.dataset.position[0]),
