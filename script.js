@@ -9,12 +9,13 @@ const tabuleirosEl = document.getElementById(`board`);
 const h2 = document.getElementById("tituloTabuleiro");
 
 const gerarButton = document.getElementById("gerar");
-const sizeInput = document.getElementById("sizeInput");
+var sizeInput = document.getElementById("sizeInput");
 var size = sizeInput.value <= 0 ? 8 : sizeInput.value;
 
 gerarButton.addEventListener("click", () => {
+  var size = sizeInput.value <= 0 ? 8 : sizeInput.value;
   gerarTabuleiro(tabuleirosEl, size, size);
-  h2.innerText = "Estudos HTML, Css, JavaScript";
+  h2.innerText = "Jogo de damas";
 });
 
 const startButton = document.getElementById("comecar");
@@ -43,12 +44,10 @@ const handlePosPeca = (e) => {
   e.target.appendChild(pecaEl);
   const casas = document.getElementsByName("casa");
   casas.forEach((casa) => {
-    if (!casa.firstChild) {
-      casa.removeEventListener("click", handlePosPeca, true);
-    }
+    casa.removeEventListener("click", handlePosPeca, true);
   });
 
-  h2.innerText = "Estudos HTML, Css, JavaScript";
+  h2.innerText = "Peça posicionada, Voltando ao jogo de damas";
 };
 
 // desenhar tabuleiro  --------------------------------------------------------------
@@ -110,15 +109,14 @@ const initialPieces = [
 const t = sizeInput.value;
 const testePecas = [
   { posY: 0, posX: t - 1, time: "branco", color: "white" },
-  { posY: 2, posX: t - 1, time: "branco", color: "white" },
-  { posY: t - 1, posX: t - 1, time: "branco", color: "white" },
-  { posY: 1, posX: t - 2, time: "preto", color: "black" },
-  { posY: t - 2, posX: t - 2, time: "preto", color: "black" },
-  { posY: t - 4, posX: t - 4, time: "preto", color: "black" },
+  { posY: 0, posX: 1, time: "branco", color: "white" },
+  { posY: 6, posX: 5, time: "preto", color: "black" },
+  // { posY: 7, posX: 6, time: "preto", color: "black" },
+  { posY: 4, posX: 5, time: "preto", color: "black" },
 ];
 
 const start = () => {
-  posicionarPecas(initialPieces);
+  posicionarPecas(testePecas);
   game(15); // entra no mundo do jogo
 };
 
@@ -175,7 +173,7 @@ var vezDoBranco = true;
 
 const update = () => {
   onclick = (e) => {
-    if (e.target.id === "peca") {
+    if (e.target.id === "peca" || e.target.id === "dama") {
       if (vezDoBranco) {
         if (pecaBranca(e.target)) {
           limparSelecao();
@@ -222,6 +220,68 @@ const comer = (casas) => {
   });
 };
 
+const verificarMovimentosDama = (casa) => {
+  var movimentoPossiveis = [];
+  var aux = [];
+
+  var esqBaixo = esqCosta(casa);
+  while (esqBaixo !== null) {
+    if (vazia(esqBaixo))
+      aux.length > 0
+        ? movimentoPossiveis.push({ destino: esqBaixo, comer: aux })
+        : movimentoPossiveis.push({ destino: esqBaixo });
+    else if (pecaInimiga(esqBaixo) && !protegida(esqCosta(esqBaixo))) {
+      aux.push(esqBaixo);
+    }
+
+    esqBaixo = esqCosta(esqBaixo);
+  }
+
+  var esqCima = esqFrente(casa);
+  while (esqCima !== null) {
+    if (vazia(esqCima))
+      aux.length > 0
+        ? movimentoPossiveis.push({ destino: esqCima, comer: aux })
+        : movimentoPossiveis.push({ destino: esqCima });
+    else if (pecaInimiga(esqCima) && !protegida(esqFrente(esqCima))) {
+      aux.push(esqCima);
+    }
+
+    esqCima = esqFrente(esqCima);
+  }
+  aux = [];
+
+  var dirBaixo = dirCosta(casa);
+  while (dirBaixo !== null) {
+    if (vazia(dirBaixo))
+      aux.length > 0
+        ? movimentoPossiveis.push({ destino: dirBaixo, comer: aux })
+        : movimentoPossiveis.push({ destino: dirBaixo });
+    else if (pecaInimiga(dirBaixo) && !protegida(dirCosta(dirBaixo))) {
+      aux.push(dirBaixo);
+    }
+
+    dirBaixo = dirCosta(dirBaixo);
+  }
+  aux = [];
+
+  var dirCima = dirFrente(casa);
+  while (dirCima !== null) {
+    if (vazia(dirCima))
+      aux.length > 0
+        ? movimentoPossiveis.push({ destino: dirCima, comer: aux })
+        : movimentoPossiveis.push({ destino: dirCima });
+    else if (pecaInimiga(dirCima) && !protegida(dirFrente(dirCima))) {
+      aux.push(dirCima);
+    }
+
+    dirCima = dirFrente(dirCima);
+  }
+  aux = [];
+
+  return movimentoPossiveis;
+};
+
 const mover = (src, target) => {
   const peca = src.removeChild(src.firstChild);
 
@@ -262,7 +322,9 @@ const verificaMovimentos = (casaDaPeca, time, estaComendo = false) => {
   var movimentosPossiveis = [];
   var aux = [];
 
-  if (time === "branco") {
+  if (ehDama(casaDaPeca.firstChild))
+    movimentosPossiveis = verificarMovimentosDama(casaDaPeca);
+  else if (time === "branco") {
     if (dirFrente(casaDaPeca)) {
       if (vazia(dirFrente(casaDaPeca)) && !estaComendo)
         movimentosPossiveis.push({ destino: dirFrente(casaDaPeca) });
@@ -278,22 +340,26 @@ const verificaMovimentos = (casaDaPeca, time, estaComendo = false) => {
             comer: aux,
           });
       }
-    }
 
-    if (esqFrente(casaDaPeca)) {
-      if (vazia(esqFrente(casaDaPeca)) && !estaComendo)
-        movimentosPossiveis.push({ destino: esqFrente(casaDaPeca) });
-      else if (
-        pecaInimiga(esqFrente(casaDaPeca), time) &&
-        !protegida(esqFrente(esqFrente(casaDaPeca)))
-      ) {
-        aux = verificaMovimentos(esqFrente(esqFrente(casaDaPeca)), time, true);
-        aux.push(esqFrente(casaDaPeca), esqFrente(esqFrente(casaDaPeca)));
-        if (!estaComendo)
-          movimentosPossiveis.push({
-            destino: aux[1],
-            comer: aux,
-          });
+      if (esqFrente(casaDaPeca)) {
+        if (vazia(esqFrente(casaDaPeca)) && !estaComendo)
+          movimentosPossiveis.push({ destino: esqFrente(casaDaPeca) });
+        else if (
+          pecaInimiga(esqFrente(casaDaPeca), time) &&
+          !protegida(esqFrente(esqFrente(casaDaPeca)))
+        ) {
+          aux = verificaMovimentos(
+            esqFrente(esqFrente(casaDaPeca)),
+            time,
+            true
+          );
+          aux.push(esqFrente(casaDaPeca), esqFrente(esqFrente(casaDaPeca)));
+          if (!estaComendo)
+            movimentosPossiveis.push({
+              destino: aux[1],
+              comer: aux,
+            });
+        }
       }
     }
   } else {
@@ -335,6 +401,10 @@ const verificaMovimentos = (casaDaPeca, time, estaComendo = false) => {
   if (estaComendo) return aux;
 
   return movimentosPossiveis;
+};
+
+const ehDama = (peca) => {
+  return peca && peca.getAttribute("id") === "dama";
 };
 
 const pintarMovimentosPossiveis = (m) => {
@@ -401,6 +471,8 @@ const esqCosta = (casa) => {
 };
 
 const dirCosta = (casa) => {
+  if (!casa) return;
+
   const pos = [
     parseInt(casa.dataset.position[0]),
     parseInt(casa.dataset.position[2]),

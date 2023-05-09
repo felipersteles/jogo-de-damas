@@ -12,35 +12,54 @@
     <title id="titulo">Jodo de damas</title>
   </head>
   <body>
-    <div>
-      <h2 id="tituloTabuleiro"></h2>
-      <table id="board"></table>
-    </div>
-    <div>
-      <h2>Controle do jogo</h2>
-      <div id="controle">
-        <div class="box">
-          <label for="tamanho">Tamanho do tabuleiro</label>
-          <input
-            id="sizeInput"
-            placeholder="8"
-            value="8"
-            name="tamanho"
-            type="number"
-          />
+    <header>
+      <div id="logo" class="stroke">
+        <div class="start">
+          <span style="font-size: 30px">made by</span>
+          <span>Felipe</span>
         </div>
-        <button id="gerar">gerar tabuleiro</button>
-
-        <div class="box"></div>
-        <button id="comecar">começar jogo</button>
+        <a
+          class="teles stroke"
+          href="https://github.com/felipersteles"
+          target="_blank"
+          >Teles</a
+        >
       </div>
-
-      <div id="controle">
-        <label for="brancas">branca</label>
-        <input id="posTime" type="checkbox" />
-        <button id="posicionarPeca">Posicionar peça</button>
+    </header>
+    <section class="firstSection">
+      <div>
+        <h2 id="tituloTabuleiro"></h2>
+        <table id="board"></table>
       </div>
-    </div>
+      <div>
+        <h2>Controle do jogo</h2>
+        <div id="controle">
+          <div class="box">
+            <label for="tamanho">Tamanho do tabuleiro</label>
+            <input
+              id="sizeInput"
+              placeholder="8"
+              value="8"
+              name="tamanho"
+              type="number"
+            />
+          </div>
+          <button id="gerar">gerar tabuleiro</button>
+
+          <div class="box"></div>
+          <button id="comecar">começar jogo</button>
+        </div>
+
+        <div id="controle">
+          <label for="brancas">branca</label>
+          <input id="posTime" type="checkbox" />
+          <button id="posicionarPeca">Posicionar peça</button>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h1>Jogo de Damas</h1>
+    </section>
   </body>
   <script src="script.js"></script>
 </html>
